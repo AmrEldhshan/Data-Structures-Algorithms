@@ -38,11 +38,9 @@ private:
         AVLNode<T>* newRoot = unbalancedNode->leftChild;
         AVLNode<T>* transferSubtree = newRoot->rightChild;
 
-        // Perform rotation
         newRoot->rightChild = unbalancedNode;
         unbalancedNode->leftChild = transferSubtree;
 
-        // Update heights after rotation
         unbalancedNode->height = 1 + max(getHeight(unbalancedNode->leftChild), getHeight(unbalancedNode->rightChild));
         newRoot->height = 1 + max(getHeight(newRoot->leftChild), getHeight(newRoot->rightChild));
 
@@ -54,11 +52,9 @@ private:
         AVLNode<T>* newRoot = unbalancedNode->rightChild;
         AVLNode<T>* transferSubtree = newRoot->leftChild;
 
-        // Perform rotation
         newRoot->leftChild = unbalancedNode;
         unbalancedNode->rightChild = transferSubtree;
 
-        // Update heights after rotation
         unbalancedNode->height = 1 + max(getHeight(unbalancedNode->leftChild), getHeight(unbalancedNode->rightChild));
         newRoot->height = 1 + max(getHeight(newRoot->leftChild), getHeight(newRoot->rightChild));
 
@@ -69,45 +65,34 @@ private:
     AVLNode<T>* balance(AVLNode<T>* node) {
         if (!node) return node;
 
-        // Update the height of the node
         node->height = 1 + max(getHeight(node->leftChild), getHeight(node->rightChild));
-
-        // Get balance factor to check for imbalance
         int balanceFactor = getBalanceFactor(node);
 
-        // Perform appropriate rotation based on imbalance type
-
-        // Left Heavy
-        if (balanceFactor > 1) { // left issue -> left is too long
+        // Left heavy
+        if (balanceFactor > 1) {
             if (getBalanceFactor(node->leftChild) >= 0) {
-                //   Left-Left Case
-                return rotateRight(node);
+                return rotateRight(node); // Left-Left
             } else {
-                // Left-Right Case
-                node->leftChild = rotateLeft(node->leftChild);
+                node->leftChild = rotateLeft(node->leftChild); // Left-Right
                 return rotateRight(node);
             }
         }
 
-        // Right Heavy
+        // Right heavy
         if (balanceFactor < -1) {
             if (getBalanceFactor(node->rightChild) <= 0) {
-                // Right-Right Case
-                return rotateLeft(node);
+                return rotateLeft(node); // Right-Right
             } else {
-                // Right-Left Case
-                node->rightChild = rotateRight(node->rightChild);
+                node->rightChild = rotateRight(node->rightChild); // Right-Left
                 return rotateLeft(node);
             }
         }
 
-        // Already balanced
-        return node;
+        return node; // Balanced
     }
 
-    // Recursive function to insert a value and balance the subtree
+    // Recursive function to insert a value
     AVLNode<T>* insertRecursive(AVLNode<T>* currentNode, const T& key) {
-        // Standard BST insertion
         if (!currentNode)
             return new AVLNode<T>(key);
 
@@ -118,11 +103,54 @@ private:
         else
             return currentNode; // Duplicate keys not allowed
 
-        // Balance the node after insertion
         return balance(currentNode);
     }
 
-    // Inorder traversal for displaying values
+    // Find node with minimum value (used in delete)
+    AVLNode<T>* minValueNode(AVLNode<T>* node) {
+        AVLNode<T>* current = node;
+        while (current->leftChild)
+            current = current->leftChild;
+        return current;
+    }
+
+    // Recursive function to delete a node
+    AVLNode<T>* deleteRecursive(AVLNode<T>* node, const T& key) {
+        if (!node)
+            return node;
+
+        if (key < node->value) {
+            node->leftChild = deleteRecursive(node->leftChild, key);
+        } else if (key > node->value) {
+            node->rightChild = deleteRecursive(node->rightChild, key);
+        } else {
+            // Node with 0 or 1 child
+            if (!node->leftChild || !node->rightChild) {
+                AVLNode<T>* temp = node->leftChild ? node->leftChild : node->rightChild;
+
+                if (!temp) {
+                    temp = node;
+                    node = nullptr;
+                } else {
+                    *node = *temp;
+                }
+                delete temp;
+            } else {
+                // Node with 2 children
+                AVLNode<T>* temp = minValueNode(node->rightChild);
+                node->value = temp->value;
+                node->rightChild = deleteRecursive(node->rightChild, temp->value);
+            }
+        }
+
+        if (!node)
+            return node;
+
+        node->height = 1 + max(getHeight(node->leftChild), getHeight(node->rightChild));
+        return balance(node);
+    }
+
+    // Inorder traversal for display
     void inorderTraversal(AVLNode<T>* node) const {
         if (node) {
             inorderTraversal(node->leftChild);
@@ -131,7 +159,7 @@ private:
         }
     }
 
-    // Delete all nodes in the tree (postorder deletion)
+    // Delete the entire tree (postorder)
     void deleteTree(AVLNode<T>* node) {
         if (node) {
             deleteTree(node->leftChild);
@@ -141,10 +169,7 @@ private:
     }
 
 public:
-    // Constructor initializes empty tree
     AVL() : root(nullptr) {}
-
-    // Destructor deletes entire tree
     ~AVL() {
         deleteTree(root);
     }
@@ -154,13 +179,18 @@ public:
         root = insertRecursive(root, key);
     }
 
-    // Display values in sorted order
+    // Public delete function
+    void deleteNode(const T& key) {
+        root = deleteRecursive(root, key);
+    }
+
+    // Display sorted values
     void displayInorder() const {
         inorderTraversal(root);
         cout << endl;
     }
 
-    // Search function to check if a key exists
+    // Search key existence
     bool search(const T& key) const {
         AVLNode<T>* currentNode = root;
         while (currentNode) {

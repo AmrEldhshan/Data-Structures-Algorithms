@@ -157,6 +157,7 @@ public:
 
 	}
 	void insert(T key) {
+    	// log(n)
 		if (size >= capacity) {
 			resize(capacity * 2);
 		}

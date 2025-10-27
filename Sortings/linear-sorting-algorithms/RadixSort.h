@@ -52,7 +52,6 @@ void countingSortByDigit(int arr[], int size, int exp) {
     int output[1000]; // assume that the maximum value is <= 1000
     int count[10]{0};
 
-    std::cout << "[DEBUG] Sorting by digit (exp = " << exp << ")..." << std::endl;
 
     // count digit frequencies
     for (int i = 0; i < size; i++){
@@ -60,9 +59,6 @@ void countingSortByDigit(int arr[], int size, int exp) {
         count[digit]++;
     }
 
-    std::cout << "[DEBUG] Count array: ";
-    for (int i = 0; i < 10; i++) std::cout << count[i] << " ";
-    std::cout << std::endl;
 
     // cumulative count
     for (int i = 1; i<=size; i++){
@@ -81,9 +77,6 @@ void countingSortByDigit(int arr[], int size, int exp) {
     for (int i = 0; i < size; i++)
         arr[i] = output[i];
 
-    std::cout << "[DEBUG] Array after sorting by exp " << exp << ": ";
-    for (int i = 0; i < size; i++) std::cout << arr[i] << " ";
-    std::cout << std::endl;
 }
 
 /**
@@ -92,15 +85,12 @@ void countingSortByDigit(int arr[], int size, int exp) {
  * @param arr The array to sort.
  */
 void radixSort(int arr[], int size) {
-    std::cout << "[DEBUG] Starting Radix Sort...\n";
     int maxVal = getMax(arr, size);
 
     for (int exp = 1; maxVal / exp > 0; exp *= 10){
-        std::cout << "the exp is " << exp << std::endl;
         countingSortByDigit(arr, size, exp);
 
     }
-    std::cout << "[DEBUG] Radix Sort complete.\n";
 }
 
 #endif // RADIXSORT_H

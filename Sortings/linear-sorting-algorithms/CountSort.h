@@ -44,7 +44,6 @@ void countSort(int arr[], int size) {
             maxValue = arr[i];
         }
     }
-    cout << "Maximum value in the array: " << maxValue << endl;
 
     // 2. Create a count array to store frequencies
     vector<int> count(maxValue + 1, 0);
@@ -53,22 +52,11 @@ void countSort(int arr[], int size) {
     for (int i = 0; i < size; i++) {
         count[arr[i]]++;
     }
-    cout << "\nFrequency count:\n";
-    for (int i = 0; i <= maxValue; i++) {
-        if (count[i] > 0) {  // Only show non-zero frequencies
-            cout << "Value " << i << ": " << count[i] << " times\n";
-        }
-    }
+
 
     // 4. Calculate cumulative count
     for (int i = 1; i <= maxValue; i++) {
         count[i] += count[i - 1];
-    }
-    cout << "\nCumulative count:\n";
-    for (int i = 0; i <= maxValue; i++) {
-        if (count[i] > 0) {  // Only show non-zero counts
-            cout << "Value " << i << ": " << count[i] << endl;
-        }
     }
 
     // 5. Create output array
@@ -85,7 +73,6 @@ void countSort(int arr[], int size) {
         arr[i] = output[i];
     }
 
-    cout << "\nCounting Sort completed!\n";
 }
 
 #endif // COUNTSORT_H
