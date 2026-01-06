@@ -19,6 +19,8 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/tree/AVL/
     ${PROJECT_SOURCE_DIR}/tree/BST/
     ${PROJECT_SOURCE_DIR}/tree/Heap/
+    ${PROJECT_SOURCE_DIR}/Stacks-and-Queues/Queues/based-on-heap
+
 )
 
 # Add the main executable

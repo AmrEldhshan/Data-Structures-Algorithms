@@ -1,221 +1,257 @@
+/*
+Max-Priority Queue Implementation (Dynamic Array-Based Heap)
+------------------------------------------------------------
+Data Structure:
+    Binary Max-Heap implemented using a dynamically allocated array.
+
+Goal:
+    Efficiently manage a collection of elements where extraction of the
+    maximum element is required in logarithmic time.
+
+Operations and Complexities:
+    buildMaxHeap()   : O(n)
+    insert(key)      : O(log n)
+    extractMax()     : O(log n)
+    increaseKey(i,k) : O(log n)
+    decreaseKey(i,k) : O(log n)
+    maximum()        : O(1)
+    remove(key)      : O(log n)
+    heapSort()       : O(n log n)
+    print()          : O(n)
+    clear()          : O(1)
+
+Space Complexity:
+    O(n)
+        - n: number of elements in the heap.
+        - Backed by a dynamically allocated array that resizes as needed.
+
+Design Notes:
+    - Uses 0-based indexing for heap relationships:
+          parent(i) = (i - 1) / 2
+          left(i)   = 2 * i + 1
+          right(i)  = 2 * i + 2
+    - Automatically doubles capacity when full.
+    - No STL or external libraries are used — implemented entirely
+      with raw dynamic arrays.
+    - Designed for clarity, safety, and educational demonstration
+      of heap-based priority queues.
+
+References:
+    - Based on principles from *Introduction to Algorithms (CLRS)*,
+      Chapter 6: Heapsort and Priority Queues.
+*/
+
 #ifndef MAX_PRIORITY_QUEUE_H
 #define MAX_PRIORITY_QUEUE_H
 
-#include <iostream> // For cout, endl
-#include <stdexcept> // For out_of_range, invalid_argument
-#include <algorithm> // For std::swap
-#include <cmath>     // For std::max
+#include <iostream>
+#include <stdexcept>
 
-template <class T>
+template <typename T>
 class MaxPriorityQueue {
 private:
     T* heap;
     int capacity;
-    int size; // Number of elements currently in the heap
+    int size;
 
-    // Helper functions (0-based indexing)
-    int parent(int i) {
-        if (i == 0) return -1; // Root has no parent
-        return (i - 1) / 2;
-    }
-    int left(int i) { return 2 * i + 1; }
-    int right(int i) { return 2 * i + 2; }
+    // ---------------- Helper Functions ----------------
+    inline int parent(int i) const { return (i - 1) / 2; }
+    inline int left(int i) const { return 2 * i + 1; }
+    inline int right(int i) const { return 2 * i + 2; }
 
     void resize(int new_capacity) {
-        if (new_capacity < size) {
-            new_capacity = size; 
-        }
-        if (new_capacity == 0) new_capacity = 1; 
+        if (new_capacity < size) new_capacity = size;
+        if (new_capacity < 1) new_capacity = 1;
 
         T* newHeap = new T[new_capacity];
-        for (int i = 0; i < size; i++) { 
+        for (int i = 0; i < size; ++i)
             newHeap[i] = heap[i];
-        }
-        delete[] heap; 
-        heap = newHeap; 
-        capacity = new_capacity; 
+
+        delete[] heap;
+        heap = newHeap;
+        capacity = new_capacity;
     }
 
-    // maxHeapify now takes 'current_heap_size' to define its operational boundary.
-    void maxHeapify(int i, int current_heap_size) {
+    void maxHeapify(int i, int current_size) {
         int l = left(i);
         int r = right(i);
-        int largest = i; 
+        int largest = i;
 
-        // Check left child, ensuring it's within current_heap_size bounds.
-        if (l < current_heap_size && heap[l] > heap[largest])
+        if (l < current_size && heap[l] > heap[largest])
             largest = l;
-        // Check right child, ensuring it's within current_heap_size bounds.
-        if (r < current_heap_size && heap[r] > heap[largest])
+        if (r < current_size && heap[r] > heap[largest])
             largest = r;
-        
+
         if (largest != i) {
-            std::swap(heap[i], heap[largest]);
-            // Pass current_heap_size down in the recursive call.
-            maxHeapify(largest, current_heap_size); 
+            T temp = heap[i];
+            heap[i] = heap[largest];
+            heap[largest] = temp;
+            maxHeapify(largest, current_size);
         }
+    }
+
+    void buildMaxHeap() {
+        for (int i = (size / 2) - 1; i >= 0; --i)
+            maxHeapify(i, size);
     }
 
 public:
-    // Constructors
-    MaxPriorityQueue() : capacity(1), size(0) { 
+    // ---------------- Constructors & Destructor ----------------
+    MaxPriorityQueue() : capacity(1), size(0) {
         heap = new T[capacity];
     }
 
-    MaxPriorityQueue(T* array, int n) : size(n) { 
-        capacity = std::max(1, n); 
+    MaxPriorityQueue(const T* array, int n) : capacity(n), size(n) {
+        if (n < 0) throw std::invalid_argument("Invalid size.");
         heap = new T[capacity];
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; ++i)
             heap[i] = array[i];
+        buildMaxHeap();
+    }
+
+    MaxPriorityQueue(const MaxPriorityQueue& other)
+        : capacity(other.capacity), size(other.size) {
+        heap = new T[capacity];
+        for (int i = 0; i < size; ++i)
+            heap[i] = other.heap[i];
+    }
+
+    MaxPriorityQueue& operator=(const MaxPriorityQueue& other) {
+        if (this != &other) {
+            delete[] heap;
+            capacity = other.capacity;
+            size = other.size;
+            heap = new T[capacity];
+            for (int i = 0; i < size; ++i)
+                heap[i] = other.heap[i];
         }
-        buildMaxHeap(); // Calls internal buildMaxHeap which uses 'size'
+        return *this;
     }
 
     ~MaxPriorityQueue() {
         delete[] heap;
     }
 
-	void buildMaxHeap() {
-		for (int i = (size / 2) - 1; i >= 0; i--) {
-			maxHeapify(i, size);
-		}
-	}
+    // ---------------- Core Heap Operations ----------------
+    void insert(T key) {
+        if (size >= capacity)
+            resize(capacity * 2);
 
-	// Sorts the elements in the heap array in ascending order (in-place).
-	void heapSort() {
-    	buildMaxHeap(); // First, ensure the array forms a max-heap.
-    	int original_size = size; // Store original size to restore it later.
+        int i = size;
+        heap[i] = key;
+        size++;
 
-    	// Iterate from the last element down to the second element (index 1).
-    	for (int i = size - 1; i > 0; i--) {
-    		std::swap(heap[0], heap[i]); // Move the current max element (root) to the end of the unsorted part.
-    		// When calling maxHeapify, pass 'i' as the current effective heap size.
-    		// This 'i' represents the boundary of the unsorted part.
-    		maxHeapify(0, i); // maxHeapify operates on elements from 0 to i-1.
-    	}
-    	size = original_size; // Restore the original size of the heap after sorting.
+        // Fix the heap upwards
+        while (i > 0 && heap[parent(i)] < heap[i]) {
+            T temp = heap[i];
+            heap[i] = heap[parent(i)];
+            heap[parent(i)] = temp;
+            i = parent(i);
+        }
     }
 
-	T extractMax() {
-		// extract max running time = O(log(n))
-		if (size == 0) {
-			throw std::out_of_range("MaxPriorityQueue is empty");
-		}
+    T extractMax() {
+        if (size == 0)
+            throw std::out_of_range("Heap is empty.");
 
-		T result = heap[0];
-		size--;
-		heap[0] = heap[size]; // we do not make size - 1 as we already minus one from the size above line
+        T maxVal = heap[0];
+        heap[0] = heap[size - 1];
+        size--;
 
-    	// Call maxHeapify with the updated 'size' of the heap.
-		maxHeapify(0, size);
-		return result;
-
-	}
-
-	T maximum() {
-    	if (size <= 0) {
-    		throw std::out_of_range("Heap is empty: No maximum element.");
-    	}
-    	return heap[0];
+        maxHeapify(0, size);
+        return maxVal;
     }
 
-	void increaseKey(int i, T key) {
-		//	running time = O(log(n))
-		if (key < heap[i]) {
+    T maximum() const {
+        if (size == 0)
+            throw std::out_of_range("Heap is empty.");
+        return heap[0];
+    }
+
+    void increaseKey(int i, T newKey) {
+        if (i < 0 || i >= size)
+            throw std::out_of_range("Invalid index.");
+        if (newKey < heap[i])
             throw std::invalid_argument("New key is smaller than current key.");
-		}
-		if (i < 0 || i >= size) {
-			throw std::out_of_range("Index out of bounds for increaseKey.");
-		}
-		heap[i] = key;
-		while (i > 0 && heap[parent(i)] < heap[i]) {
-			std::swap(heap[i], heap[parent(i)]);
-			i = parent(i);
-		}
-	}
 
-
-	void decreaseKey(int i, T key) {
-		if (key < heap[i]) {
-			throw std::invalid_argument("New key is smaller than current key.");
-		}
-		if (i < 0 || i >= size) {
-			throw std::invalid_argument("Index out of bounds for decreaseKey.");
-		}
-		heap[i] = key;
-		while (i > 0 && heap[parent(i)] > heap[i]) {
-			std::swap(heap[i], heap[parent(i)]);
-			i = parent(i);
-		}
-	}
-
-	T minimum() {
-		if (size == 0) {
-			throw std::out_of_range("Heap is empty.");
-		}
-		return heap[size - 1];
-
-	}
-	void insert(T key) {
-    	// log(n)
-		if (size >= capacity) {
-			resize(capacity * 2);
-		}
-		heap[size] = key;
-		int i = size;
-		size++;
-    	while (i > 0 && heap[parent(i)] < heap[i]) {
-    		std::swap(heap[i], heap[parent(i)]);
-    		i = parent(i);
-    	}
-	}
-
-	void remove(T key) {
-	    if (size < 1) {
-		    throw std::invalid_argument("Heap is empty.");
-	    }
-
-    	int index = -1;
-    	for (int i = 0; i < size; i++) {
-    		if (heap[i] == key) {
-    			index = i;
-    			break;
-    		}
-    	}
-
-    	if (index == -1) {
-    		throw std::invalid_argument("Key not found in heap.");
-    	}
-
-    	// Move the last element to the position of the element to remove
-    	size--;
-    	heap[index] = heap[size];
-
-    	// If we didn't remove the last element, we need to potentially heapify
-    	if (index < size) {
-    		// Check if we need to move it up or down
-    		if (index > 0 && heap[index] > heap[parent(index)]) {
-    			// Move up
-    			while (index > 0 && heap[index] > heap[parent(index)]) {
-    				std::swap(heap[index], heap[parent(index)]);
-    				index = parent(index);
-    			}
-    		} else {
-    			// Move down
-    			maxHeapify(index, size);
-    		}
-    	}
-
+        heap[i] = newKey;
+        while (i > 0 && heap[parent(i)] < heap[i]) {
+            T temp = heap[i];
+            heap[i] = heap[parent(i)];
+            heap[parent(i)] = temp;
+            i = parent(i);
+        }
     }
-	// Utility functions
-	int getSize() const { return size; }
-	bool isEmpty() const { return size == 0; }
 
-	void print() const {
-    	for (int i = 0; i < size; i++) {
-    		std::cout << heap[i] << " ";
-    	}
-    	std::cout << std::endl;
+    void decreaseKey(int i, T newKey) {
+        if (i < 0 || i >= size)
+            throw std::out_of_range("Invalid index.");
+        if (newKey > heap[i])
+            throw std::invalid_argument("New key is larger than current key.");
+
+        heap[i] = newKey;
+        maxHeapify(i, size);
+    }
+
+    void remove(T key) {
+        if (size == 0)
+            throw std::out_of_range("Heap is empty.");
+
+        int index = -1;
+        for (int i = 0; i < size; ++i) {
+            if (heap[i] == key) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index == -1)
+            throw std::invalid_argument("Key not found.");
+
+        heap[index] = heap[size - 1];
+        size--;
+
+        // Fix heap property
+        if (index > 0 && heap[index] > heap[parent(index)]) {
+            while (index > 0 && heap[index] > heap[parent(index)]) {
+                T temp = heap[index];
+                heap[index] = heap[parent(index)];
+                heap[parent(index)] = temp;
+                index = parent(index);
+            }
+        } else {
+            maxHeapify(index, size);
+        }
+    }
+
+    // ---------------- Utility Functions ----------------
+    void clear() { size = 0; }
+
+    void shrinkToFit() {
+        if (capacity > size)
+            resize(size);
+    }
+
+    bool isEmpty() const { return size == 0; }
+
+    int getSize() const { return size; }
+
+    void print() const {
+        for (int i = 0; i < size; ++i)
+            std::cout << heap[i] << " ";
+        std::cout << std::endl;
+    }
+
+    void heapSort() {
+        buildMaxHeap();
+        int original_size = size;
+        for (int i = size - 1; i > 0; --i) {
+            T temp = heap[0];
+            heap[0] = heap[i];
+            heap[i] = temp;
+            maxHeapify(0, i);
+        }
+        size = original_size;
     }
 };
 
