@@ -1,3 +1,0 @@
-D:/Codes and programs/DataStructure-alg/final revision/cmake-build-debug/CMakeFiles/final_revision.dir
-D:/Codes and programs/DataStructure-alg/final revision/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/Codes and programs/DataStructure-alg/final revision/cmake-build-debug/CMakeFiles/rebuild_cache.dir
